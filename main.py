@@ -1,4 +1,5 @@
 import datetime
+import os
 import tkinter
 import configparser
 from chinese_calendar import is_holiday
@@ -34,10 +35,13 @@ def strfdelta(tdelta, fmt):
     return fmt.format(**d)
 
 
-def center_window(root, width, height):
-    screenwidth = root.winfo_screenwidth()
-    screenheight = root.winfo_screenheight()
-    size = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+def set_window_location(root, width, height, x, y):
+    if x == 0 and y == 0:
+        screenwidth = root.winfo_screenwidth()
+        screenheight = root.winfo_screenheight()
+        size = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+    else:
+        size = '%dx%d+%d+%d' % (width, height, x, y)
     root.geometry(size)
     root.update()
 
@@ -56,6 +60,9 @@ def stopMove(event):
     global x, y
     x = None
     y = None
+    conf.set("location", "x", str(root.winfo_x()))
+    conf.set("location", "y", str(root.winfo_y()))
+    conf.write(open("cfg.ini", "w"))
 
 
 def onMotion(event):
@@ -70,15 +77,17 @@ def onMotion(event):
 if __name__ == '__main__':
     # 配置信息读取
     conf = configparser.ConfigParser()
-    conf.read("cfg.ini",encoding='utf8')
+    conf.read("cfg.ini", encoding='utf8')
     MyHour = conf.get("off_duty_time", "hour")
     MyMinute = conf.get("off_duty_time", "minute")
     off_duty_time = datetime.time(int(MyHour), int(MyMinute), 0)
+    x = conf.get("location", "x")
+    y = conf.get("location", "y")
 
     # 窗口创建
     root = tkinter.Tk()
     root.title('假期倒计时')
-    center_window(root, 200, 20)
+    set_window_location(root, 200, 20, int(x), int(y))
     root.overrideredirect(1)  # 去除窗口边框
     root.wm_attributes("-alpha", 0.5)  # 透明度(0.0~1.0)
     root.wm_attributes("-toolwindow", True)  # 置为工具窗口(没有最大最小按钮)
